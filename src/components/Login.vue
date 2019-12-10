@@ -8,8 +8,8 @@
       <!--登录表单区域-->
       <el-form ref="loginFormRef" :model="loginForm" :rules="loginFormRules" label-width="0px" class="login_form">
         <!--用户名-->
-        <el-form-item prop="loginname">
-          <el-input v-model="loginForm.loginname" prefix-icon="el-icon-s-custom"></el-input>
+        <el-form-item prop="username">
+          <el-input v-model="loginForm.username" prefix-icon="el-icon-s-custom"></el-input>
         </el-form-item>
         <!--密码-->
         <el-form-item prop="password">
@@ -31,12 +31,12 @@ export default {
     return {
       // 登录表单的数据绑定对象，注意属性名称应该和POJO中的属性名一致
       loginForm: {
-        loginname: 'admin',
-        password: 'admin'
+        username: 'admin',
+        password: '123456'
       },
       // 登录表单的验证规则对象
       loginFormRules: {
-        loginname: [
+        username: [
           { required: true, message: '请输入用户名称', trigger: 'blur' },
           { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
         ],
@@ -55,8 +55,9 @@ export default {
     login () {
       this.$refs.loginFormRef.validate(async valid => {
         if (!valid) return
-        const { data: res } = await this.$http.post('admin/login', this.loginForm)
-        if (res.code !== 20000) return this.$message.error('登录失败')
+        const { data: res } = await this.$http.post('login', this.loginForm)
+        // console.log(res)
+        if (res.meta.status !== 200) return this.$message.error('登录失败')
         this.$message.success('登录成功')
         // 1.将登录成功之后的token，保存到客户端的sessionStorage中
         // 1.1 项目中除了登录之外的其他API接口，必须在登录之后才能访问
