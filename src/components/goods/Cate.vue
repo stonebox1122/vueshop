@@ -14,7 +14,7 @@
           <el-button type="primary" @click="showAddCateDialog">添加分类</el-button>
         </el-col>
       </el-row>
-      <!--表格-->
+      <!--表格，使用vue-table-with-tree-grid-->
       <tree-table class="treeTable" :data="catelist" :columns="columns" :selection-type="false"
                   :expand-type="false" show-index index-text="">
         <!--是否有效-->
