@@ -3,9 +3,9 @@ import VueRouter from 'vue-router'
 import Login from '../components/Login'
 import Home from '../components/Home'
 import Welcome from '../components/Welcome'
-import Users from '../components/user/Users'
-import Rights from '../components/power/Rights'
-import Roles from '../components/power/Roles'
+import User from '../components/user/User'
+import Right from '../components/power/Right'
+import Role from '../components/power/Role'
 import Cate from '../components/goods/Cate'
 import Params from '../components/goods/Params'
 import GoodsList from '../components/goods/List'
@@ -34,16 +34,16 @@ const routes = [
         component: Welcome
       },
       {
-        path: '/users',
-        component: Users
+        path: '/user',
+        component: User
       },
       {
-        path: '/rights',
-        component: Rights
+        path: '/right',
+        component: Right
       },
       {
-        path: '/roles',
-        component: Roles
+        path: '/role',
+        component: Role
       },
       {
         path: '/categories',

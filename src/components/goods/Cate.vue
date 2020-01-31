@@ -209,7 +209,7 @@
         // console.log(this.addCateForm)
         this.$refs.addCateFormRef.validate(async valid => {
           if (!valid) return
-          const {data:res} = await this.$http.post('categories', this.addCateForm)
+          const {data: res} = await this.$http.post('categories', this.addCateForm)
           if (res.meta.status !== 201) {
             return this.$message.error('添加分类失败')
           }

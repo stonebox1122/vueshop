@@ -31,8 +31,8 @@ export default {
     return {
       // 登录表单的数据绑定对象，注意属性名称应该和POJO中的属性名一致
       loginForm: {
-        username: 'admin',
-        password: '123456'
+        username: 'cq00001',
+        password: '123'
       },
       // 登录表单的验证规则对象
       loginFormRules: {
@@ -57,7 +57,7 @@ export default {
         if (!valid) return
         const { data: res } = await this.$http.post('login', this.loginForm)
         // console.log(res)
-        if (res.meta.status !== 200) return this.$message.error('登录失败')
+        if (res.status !== 200) return this.$message.error('登录失败')
         this.$message.success('登录成功')
         // 1.将登录成功之后的token，保存到客户端的sessionStorage中
         // 1.1 项目中除了登录之外的其他API接口，必须在登录之后才能访问
