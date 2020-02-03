@@ -55,9 +55,9 @@ export default {
     login () {
       this.$refs.loginFormRef.validate(async valid => {
         if (!valid) return
-        const { data: res } = await this.$http.post('login', this.loginForm)
-        // console.log(res)
-        if (res.status !== 200) return this.$message.error('登录失败')
+        const {data: res} = await this.$http.post('login', this.loginForm)
+        //console.log(res)
+        if (res.status !== 200) return this.$message.error('用户名或密码错误，登录失败')
         this.$message.success('登录成功')
         // 1.将登录成功之后的token，保存到客户端的sessionStorage中
         // 1.1 项目中除了登录之外的其他API接口，必须在登录之后才能访问

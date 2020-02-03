@@ -17,7 +17,7 @@
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary" @click="addDialogVisible = true">添加用户</el-button>
+          <el-button type="primary" @click="showAddDialog()">添加用户</el-button>
         </el-col>
       </el-row>
       <!--用户列表区域-->
@@ -37,18 +37,24 @@
         </el-table-column>
         <el-table-column label="状态">
           <template slot-scope="scope">
-            <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0" @change="userStatusChanged(scope.row)"></el-switch>
+            <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0"
+                       @change="userStatusChanged(scope.row)"></el-switch>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="190px">
           <template slot-scope="scope">
             <!--修改按钮-->
-            <el-button type="primary" icon="el-icon-edit" size="mini" @click="showEditDialog(scope.row.id)"></el-button>
+            <el-tooltip effect="dark" content="重置密码" placement="top-start" :enterable="false">
+              <el-button type="primary" icon="el-icon-edit" size="mini"
+                         @click="showEditDialog(scope.row.id)"></el-button>
+            </el-tooltip>
             <!--删除按钮-->
-            <el-button type="danger" icon="el-icon-delete" size="mini"
-                       @click="removeUserById(scope.row.id)"></el-button>
+            <el-tooltip effect="dark" content="删除" placement="top-start" :enterable="false">
+              <el-button type="danger" icon="el-icon-delete" size="mini"
+                         @click="removeUserById(scope.row.id)"></el-button>
+            </el-tooltip>
             <!--分配角色按钮-->
-            <el-tooltip effect="dark" content="分配角色" placement="top-start" :enterable="false">
+            <el-tooltip effect="dark" content="修改角色" placement="top-start" :enterable="false">
               <el-button type="warning" icon="el-icon-setting" size="mini" @click="setRole(scope.row)"></el-button>
             </el-tooltip>
           </template>
@@ -77,6 +83,16 @@
         <el-form-item label="密码" prop="password">
           <el-input v-model="addForm.password"></el-input>
         </el-form-item>
+        <el-form-item label="角色" prop="roles">
+          <el-select v-model="addForm.roleId" placeholder="请选择">
+            <el-option
+              v-for="item in roleList"
+              :key="item.id"
+              :label="item.description"
+              :value="item.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="addDialogVisible = false">取 消</el-button>
@@ -92,11 +108,8 @@
         <el-form-item label="工号">
           <el-input v-model="editForm.username" disabled></el-input>
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="editForm.email"></el-input>
-        </el-form-item>
-        <el-form-item label="手机" prop="mobile">
-          <el-input v-model="editForm.mobile"></el-input>
+        <el-form-item label="密码" prop="password">
+          <el-input type="password" v-model.trim="editForm.password" placeholder="请输入重置密码"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -109,15 +122,15 @@
       title="分配角色"
       :visible.sync="setRoleDialogVisible"
       width="50%" @close="setRoleDialogClosed">
-      <div>
+      <div v-if="userInfo.roles">
         <p>当前的用户：{{userInfo.username}}</p>
-        <p>当前的角色：{{userInfo.role_name}}</p>
+        <p>当前的角色：{{userInfo.roles[0].description}}</p>
         <p>分配新角色：
           <el-select v-model="selectedRoleId" placeholder="请选择">
             <el-option
               v-for="item in roleList"
               :key="item.id"
-              :label="item.roleName"
+              :label="item.description"
               :value="item.id">
             </el-option>
           </el-select>
@@ -168,8 +181,7 @@
         addForm: {
           username: '',
           password: '',
-          email: '',
-          mobile: ''
+          roleId: ''
         },
         // 添加表单的验证规则对象
         addFormRules: {
@@ -181,10 +193,6 @@
             {required: true, message: '请输入密码', trigger: 'blur'},
             {min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur'}
           ],
-          email: [
-            {required: true, message: '请输入邮箱', trigger: 'blur'},
-            {validator: checkEmail, trigger: 'blur'}
-          ],
           mobile: [
             {required: true, message: '请输入手机', trigger: 'blur'},
             {validator: checkMobile, trigger: 'blur'}
@@ -194,18 +202,13 @@
         editDialogVisible: false,
         // 查询到的用户信息对象
         editForm: {
-          email: '',
-          mobile: ''
+          password: ''
         },
         // 修改表单的验证规则对象
         editFormRules: {
-          email: [
-            {required: true, message: '请输入邮箱', trigger: 'blur'},
-            {validator: checkEmail, trigger: 'blur'}
-          ],
-          mobile: [
-            {required: true, message: '请输入手机', trigger: 'blur'},
-            {validator: checkMobile, trigger: 'blur'}
+          password: [
+            {required: true, message: '请输入密码', trigger: 'blur'},
+            {min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur'}
           ]
         },
         // 控制分配角色对话框的显示与隐藏
@@ -214,7 +217,7 @@
         userInfo: {},
         // 所有角色数据列表
         roleList: [],
-        // 已选中的角色id值
+        // 已选中的角色名称
         selectedRoleId: ''
       }
     },
@@ -250,10 +253,25 @@
           return this.$message.error('更新用户状态失败')
         }
         this.$message.success('更新用户状态成功')
+        // 重新获取用户数据
+        this.getUserList()
       },
       // 监听添加用户对话框的关闭事件
       addDialogClosed() {
         this.$refs.addFormRef.resetFields()
+      },
+      // 展示增加用户的对话框
+      async showAddDialog() {
+        // 在展示对话框之前获取所有角色列表
+        const {data: res} = await this.$http.get('role')
+        if (res.status !== 200) {
+          return this.$message.error('获取角色列表失败')
+        }
+        this.roleList = res.data
+        this.addDialogVisible = true
+      },
+      currSelected(selVal) {
+        this.addForm.roles= this.roleList.find((item) => item.id==selVal)
       },
       // 点击按钮，添加新用户
       addUser() {
@@ -279,6 +297,7 @@
           return this.$message.error('查询用户信息失败')
         }
         this.editForm = res.data
+        this.editForm.password = ""
         this.editDialogVisible = true
       },
       // 监听修改用户对话框的关闭事件
@@ -291,7 +310,7 @@
           if (!valid) return
           // 预校验通过，可以发起修改用户的网络请求
           const {data: res} = await this.$http.put('user/' + this.editForm.id, this.editForm)
-          if (res.status !== 201) {
+          if (res.status !== 200) {
             this.$message.error('修改用户失败')
           }
           this.$message.success('修改用户成功')
@@ -325,7 +344,7 @@
       async setRole(userInfo) {
         this.userInfo = userInfo
         // 在展示对话框之前获取所有角色列表
-        const {data: res} = await this.$http.get('roles')
+        const {data: res} = await this.$http.get('role')
         if (res.status !== 200) {
           return this.$message.error('获取角色列表失败')
         }
@@ -337,7 +356,7 @@
         if (!this.selectedRoleId) {
           return this.$message.error('请选择要分配的角色')
         }
-        const {data:res} = await this.$http.put(`user/${this.userInfo.id}/role`, {rid: this.selectedRoleId})
+        const {data: res} = await this.$http.put(`user/${this.userInfo.id}/role/${this.selectedRoleId}`)
         if (res.status !== 200) {
           return this.$message.error('修改角色失败')
         }
