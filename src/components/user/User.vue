@@ -3,8 +3,8 @@
     <!--面包屑导航区域-->
     <el-breadcrumb separator-class="el-icon-arrow-right">
       <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item>系统管理</el-breadcrumb-item>
       <el-breadcrumb-item>用户管理</el-breadcrumb-item>
-      <el-breadcrumb-item>用户列表</el-breadcrumb-item>
     </el-breadcrumb>
 
     <!--卡片视图区域-->
@@ -12,8 +12,8 @@
       <!--搜索与添加区域-->
       <el-row :gutter="20">
         <el-col :span="7">
-          <el-input placeholder="请输入内容" v-model="queryInfo.query" clearable @clear="getUserList">
-            <el-button slot="append" icon="el-icon-search" @click="getUserList"></el-button>
+          <el-input placeholder="请输入工号" v-model="queryInfo.query" clearable @clear="getUserList" style="width: 120px;">
+            <!--<el-button slot="append" icon="el-icon-search" @click="getUserList"></el-button>-->
           </el-input>
         </el-col>
         <el-col :span="4">
@@ -23,25 +23,25 @@
       <!--用户列表区域-->
       <el-table :data="userlist" stripe>
         <el-table-column type="index"></el-table-column>
-        <el-table-column label="工号" prop="username"></el-table-column>
-        <el-table-column label="角色" prop="roles[0].description"></el-table-column>
-        <el-table-column label="创建时间" prop="createTime">
+        <el-table-column label="工号" prop="username" align="center"></el-table-column>
+        <el-table-column label="角色" prop="roles[0].description" align="center"></el-table-column>
+        <el-table-column label="创建时间" prop="createTime" align="center">
           <template slot-scope="scope">
             {{scope.row.createTime | dateFormat}}
           </template>
         </el-table-column>
-        <el-table-column label="修改时间" prop="updateTime">
+        <el-table-column label="修改时间" prop="updateTime" align="center">
           <template slot-scope="scope">
             {{scope.row.updateTime | dateFormat}}
           </template>
         </el-table-column>
-        <el-table-column label="状态">
+        <el-table-column label="状态" align="center">
           <template slot-scope="scope">
             <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0"
                        @change="userStatusChanged(scope.row)"></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="190px">
+        <el-table-column label="操作" width="190px" align="center">
           <template slot-scope="scope">
             <!--修改按钮-->
             <el-tooltip effect="dark" content="重置密码" placement="top-start" :enterable="false">
@@ -374,5 +374,4 @@
 </script>
 
 <style lang="less" scoped>
-
 </style>
