@@ -20,6 +20,7 @@ import 'nprogress/nprogress.css'
 import axios from 'axios'
 // 配置请求的根路径
 axios.defaults.baseURL = 'http://127.0.0.1:9001/hrm/'
+axios.defaults.timeout = 5000
 // 在request拦截器中，展示进度条
 // axios请求拦截
 axios.interceptors.request.use(config => {
@@ -27,12 +28,18 @@ axios.interceptors.request.use(config => {
   config.headers.Authorization = window.sessionStorage.getItem('token')
   // 在最后必须return config
   return config
+}, (error) => {
+  return Promise.reject(error);
 })
 
-// 在response拦截器中，隐藏进度条
+// 在response拦截器中，隐藏进度条，参考https://blog.csdn.net/weixin_34009794/article/details/91888717
 axios.interceptors.response.use(config => {
   NProgress.done()
   return config
+}, (error) => {
+  // 即使出现异常，也要调用关闭方法，否则一直处于加载状态很奇怪
+  NProgress.done();
+  return Promise.reject(error);
 })
 
 Vue.prototype.$http = axios

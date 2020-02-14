@@ -10,12 +10,61 @@
     <!--卡片视图区域-->
     <el-card>
       <!--搜索与添加区域-->
-      <el-row :gutter="20">
-        <el-col :span="7">
-          <el-input placeholder="请输入工号" v-model="queryInfo.query" clearable @clear="getUserList" style="width: 120px;">
+      <el-row  :gutter="20">
+        <el-col :span="3">
+          <el-input placeholder="工号" v-model="queryInfo.query.username" clearable @clear="getUserList" style="width: 110px;">
             <!--<el-button slot="append" icon="el-icon-search" @click="getUserList"></el-button>-->
           </el-input>
         </el-col>
+        <el-col :span="3">
+          <el-select
+            v-model="queryInfo.query.roleId"
+            placeholder="角色"
+            style="width: 110px"
+            @change=""
+          >
+            <el-option
+              v-for="item in roleList"
+              :key="item.id"
+              :label="item.description"
+              :value="item.id"
+            />
+          </el-select>
+        </el-col>
+        <el-col :span="3">
+          <el-select
+            v-model="queryInfo.query.status"
+            placeholder="状态"
+            style="width: 110px"
+            @change=""
+          >
+            <el-option
+              v-for="item in statusType"
+              :key="item.key"
+              :label="item.display_name"
+              :value="item.key"
+            />
+          </el-select>
+        </el-col>
+        <el-col :span="8">
+          <el-date-picker
+            v-model="queryInfo.query.createTime"
+            :default-time="['00:00:00','23:59:59']"
+            type="daterange"
+            range-separator=":"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+          />
+        </el-col>
+        <el-col :span="2" :offset="1">
+          <el-button type="primary" @click="searchUser()">搜索</el-button>
+        </el-col>
+        <el-col :span="2">
+          <el-button type="primary" @click="resetSearch()">重置</el-button>
+        </el-col>
+      </el-row>
+      <el-row :gutter="5">
         <el-col :span="4">
           <el-button type="primary" @click="showAddDialog()">添加用户</el-button>
         </el-col>
@@ -167,11 +216,23 @@
       return {
         // 获取用户列表的参数对象
         queryInfo: {
-          query: '',
+          query: {
+            username: '',
+            roleId: '',
+            status: '',
+            createTime: ''
+          },
           // 当前页数
           pagenum: 1,
           // 当前每页显示多少条数据
-          pagesize: 10
+          pagesize: 5
+        },
+        userSearch: {
+          username: '',
+          roleId: '',
+          status: '',
+          beginCreateTime: '',
+          endCreateTime: ''
         },
         userlist: [],
         total: 0,
@@ -218,11 +279,17 @@
         // 所有角色数据列表
         roleList: [],
         // 已选中的角色名称
-        selectedRoleId: ''
+        selectedRoleId: '',
+        // 用户状态
+        statusType: [
+          { key: 0, display_name: '停用' },
+          { key: 1, display_name: '启用' }
+        ]
       }
     },
     created() {
       this.getUserList()
+      this.getRoleList()
     },
     methods: {
       async getUserList() {
@@ -231,6 +298,13 @@
         if (res.status !== 200) return this.$message.error('获取用户列表失败')
         this.userlist = res.data.rows
         this.total = res.data.total
+      },
+      async getRoleList() {
+        const {data: res} = await this.$http.get('role')
+        if (res.status !== 200) {
+          return this.$message.error('获取角色列表失败')
+        }
+        this.roleList = res.data
       },
       // 监听pagesize改变的事件
       handleSizeChange(newSize) {
@@ -263,11 +337,7 @@
       // 展示增加用户的对话框
       async showAddDialog() {
         // 在展示对话框之前获取所有角色列表
-        const {data: res} = await this.$http.get('role')
-        if (res.status !== 200) {
-          return this.$message.error('获取角色列表失败')
-        }
-        this.roleList = res.data
+        this.getRoleList()
         this.addDialogVisible = true
       },
       currSelected(selVal) {
@@ -368,10 +438,37 @@
       setRoleDialogClosed() {
         this.selectedRoleId = ''
         this.userInfo = {}
+      },
+      resetSearch() {
+        this.queryInfo.query.username = ''
+        this.queryInfo.query.role = ''
+        this.queryInfo.query.status = ''
+        this.queryInfo.query.createTime = ''
+        this.getUserList()
+      },
+      async searchUser() {
+        console.log(this.queryInfo)
+        this.userSearch.username = this.queryInfo.query.username
+        this.userSearch.roleId = this.queryInfo.query.roleId
+        this.userSearch.status = this.queryInfo.query.status
+        this.userSearch.beginCreateTime = this.queryInfo.query.createTime[0]
+        this.userSearch.endCreateTime = this.queryInfo.query.createTime[1]
+        console.log(this.userSearch)
+        const {data: res} = await this.$http.get(`user/search/${this.queryInfo.pagenum}/${this.queryInfo.pagesize}`, {params: this.userSearch})
+        // console.log(res)
+        if (res.status !== 200) return this.$message.error('获取用户列表失败')
+        this.userlist = res.data.rows
+        this.total = res.data.total
       }
     }
   }
 </script>
 
 <style lang="less" scoped>
+  .el-row {
+    margin-bottom: 20px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 </style>
