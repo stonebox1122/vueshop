@@ -10,9 +10,10 @@
     <!--卡片视图区域-->
     <el-card>
       <!--搜索与添加区域-->
-      <el-row  :gutter="20">
+      <el-row :gutter="20">
         <el-col :span="3">
-          <el-input placeholder="工号" v-model="queryInfo.query.username" clearable @clear="getUserList" style="width: 110px;">
+          <el-input placeholder="工号" v-model="queryInfo.query.username" clearable @clear="queryInfo.query.username=''"
+                    style="width: 110px;">
             <!--<el-button slot="append" icon="el-icon-search" @click="getUserList"></el-button>-->
           </el-input>
         </el-col>
@@ -20,6 +21,8 @@
           <el-select
             v-model="queryInfo.query.roleId"
             placeholder="角色"
+            clearable
+            @clear="queryInfo.query.roleId=''"
             style="width: 110px"
             @change=""
           >
@@ -35,6 +38,8 @@
           <el-select
             v-model="queryInfo.query.status"
             placeholder="状态"
+            clearable
+            @clear="queryInfo.query.status=''"
             style="width: 110px"
             @change=""
           >
@@ -48,13 +53,14 @@
         </el-col>
         <el-col :span="8">
           <el-date-picker
-            v-model="queryInfo.query.createTime"
+            v-model="userSearch.createTime"
             :default-time="['00:00:00','23:59:59']"
             type="daterange"
             range-separator=":"
             value-format="yyyy-MM-dd HH:mm:ss"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
+            @clear="userSearch.createTime=''"
           />
         </el-col>
         <el-col :span="2" :offset="1">
@@ -220,7 +226,8 @@
             username: '',
             roleId: '',
             status: '',
-            createTime: ''
+            beginCreateTime: '',
+            endCreateTime: ''
           },
           // 当前页数
           pagenum: 1,
@@ -228,11 +235,7 @@
           pagesize: 5
         },
         userSearch: {
-          username: '',
-          roleId: '',
-          status: '',
-          beginCreateTime: '',
-          endCreateTime: ''
+          createTime: ''
         },
         userlist: [],
         total: 0,
@@ -282,8 +285,8 @@
         selectedRoleId: '',
         // 用户状态
         statusType: [
-          { key: 0, display_name: '停用' },
-          { key: 1, display_name: '启用' }
+          {key: 0, display_name: '停用'},
+          {key: 1, display_name: '启用'}
         ]
       }
     },
@@ -293,6 +296,7 @@
     },
     methods: {
       async getUserList() {
+        console.log(JSON.stringify(this.queryInfo.query))
         const {data: res} = await this.$http.get('user', {params: this.queryInfo})
         // console.log(res)
         if (res.status !== 200) return this.$message.error('获取用户列表失败')
@@ -341,7 +345,7 @@
         this.addDialogVisible = true
       },
       currSelected(selVal) {
-        this.addForm.roles= this.roleList.find((item) => item.id==selVal)
+        this.addForm.roles = this.roleList.find((item) => item.id == selVal)
       },
       // 点击按钮，添加新用户
       addUser() {
@@ -441,20 +445,25 @@
       },
       resetSearch() {
         this.queryInfo.query.username = ''
-        this.queryInfo.query.role = ''
+        this.queryInfo.query.roleId = ''
         this.queryInfo.query.status = ''
-        this.queryInfo.query.createTime = ''
+        this.queryInfo.query.beginCreateTime = ''
+        this.queryInfo.query.endCreateTime = ''
         this.getUserList()
       },
       async searchUser() {
-        console.log(this.queryInfo)
-        this.userSearch.username = this.queryInfo.query.username
-        this.userSearch.roleId = this.queryInfo.query.roleId
-        this.userSearch.status = this.queryInfo.query.status
-        this.userSearch.beginCreateTime = this.queryInfo.query.createTime[0]
-        this.userSearch.endCreateTime = this.queryInfo.query.createTime[1]
-        console.log(this.userSearch)
-        const {data: res} = await this.$http.get(`user/search/${this.queryInfo.pagenum}/${this.queryInfo.pagesize}`, {params: this.userSearch})
+        //console.log(this.queryInfo)
+        // this.userSearch.username = this.queryInfo.query.username
+        // this.userSearch.roleId = this.queryInfo.query.roleId
+        // this.userSearch.status = this.queryInfo.query.status
+        this.queryInfo.pagenum = 1
+        this.queryInfo.pagesize = 5
+        if (this.userSearch.createTime != null && this.userSearch.createTime.length == 2) {
+          this.queryInfo.query.beginCreateTime = this.userSearch.createTime[0]
+          this.queryInfo.query.endCreateTime = this.userSearch.createTime[1]
+        }
+        //console.log(this.userSearch)
+        const {data: res} = await this.$http.get(`user/search/${this.queryInfo.pagenum}/${this.queryInfo.pagesize}`, {params: this.queryInfo.query})
         // console.log(res)
         if (res.status !== 200) return this.$message.error('获取用户列表失败')
         this.userlist = res.data.rows
@@ -467,6 +476,7 @@
 <style lang="less" scoped>
   .el-row {
     margin-bottom: 20px;
+
     &:last-child {
       margin-bottom: 0;
     }
