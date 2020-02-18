@@ -296,9 +296,14 @@
     },
     methods: {
       async getUserList() {
-        console.log(JSON.stringify(this.queryInfo.query))
-        const {data: res} = await this.$http.get('user', {params: this.queryInfo})
+        // const {data: res} = await this.$http.get('user', {params: this.queryInfo})
         // console.log(res)
+        if (this.userSearch.createTime != null && this.userSearch.createTime.length == 2) {
+          this.queryInfo.query.beginCreateTime = this.userSearch.createTime[0]
+          this.queryInfo.query.endCreateTime = this.userSearch.createTime[1]
+        }
+        //console.log(this.userSearch)
+        const {data: res} = await this.$http.get(`user/search/${this.queryInfo.pagenum}/${this.queryInfo.pagesize}`, {params: this.queryInfo.query})
         if (res.status !== 200) return this.$message.error('获取用户列表失败')
         this.userlist = res.data.rows
         this.total = res.data.total
@@ -449,25 +454,21 @@
         this.queryInfo.query.status = ''
         this.queryInfo.query.beginCreateTime = ''
         this.queryInfo.query.endCreateTime = ''
+        this.userSearch.createTime = ''
+        this.queryInfo.pagenum = 1
         this.getUserList()
       },
       async searchUser() {
-        //console.log(this.queryInfo)
-        // this.userSearch.username = this.queryInfo.query.username
-        // this.userSearch.roleId = this.queryInfo.query.roleId
-        // this.userSearch.status = this.queryInfo.query.status
+        // if (this.userSearch.createTime != null && this.userSearch.createTime.length == 2) {
+        //   this.queryInfo.query.beginCreateTime = this.userSearch.createTime[0]
+        //   this.queryInfo.query.endCreateTime = this.userSearch.createTime[1]
+        // }
+        // const {data: res} = await this.$http.get(`user/search/${this.queryInfo.pagenum}/${this.queryInfo.pagesize}`, {params: this.queryInfo.query})
+        // if (res.status !== 200) return this.$message.error('获取用户列表失败')
+        // this.userlist = res.data.rows
+        // this.total = res.data.total
         this.queryInfo.pagenum = 1
-        this.queryInfo.pagesize = 5
-        if (this.userSearch.createTime != null && this.userSearch.createTime.length == 2) {
-          this.queryInfo.query.beginCreateTime = this.userSearch.createTime[0]
-          this.queryInfo.query.endCreateTime = this.userSearch.createTime[1]
-        }
-        //console.log(this.userSearch)
-        const {data: res} = await this.$http.get(`user/search/${this.queryInfo.pagenum}/${this.queryInfo.pagesize}`, {params: this.queryInfo.query})
-        // console.log(res)
-        if (res.status !== 200) return this.$message.error('获取用户列表失败')
-        this.userlist = res.data.rows
-        this.total = res.data.total
+        this.getUserList()
       }
     }
   }
