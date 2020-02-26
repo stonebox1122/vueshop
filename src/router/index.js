@@ -3,8 +3,8 @@ import VueRouter from 'vue-router'
 import Login from '../components/Login'
 import Home from '../components/Home'
 import Welcome from '../components/Welcome'
-import User from '../components/user/User'
-import Right from '../components/power/Right'
+import User from '../components/system/User'
+import Permission from '../components/system/Permission'
 import Role from '../components/power/Role'
 import Cate from '../components/goods/Cate'
 import Params from '../components/goods/Params'
@@ -38,8 +38,8 @@ const routes = [
         component: User
       },
       {
-        path: '/right',
-        component: Right
+        path: '/permission',
+        component: Permission
       },
       {
         path: '/role',
