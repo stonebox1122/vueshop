@@ -22,14 +22,34 @@
         width="50%" @close="addDialogClosed">
         <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="70px">
           <el-form-item label="权限类型" prop="type">
-            <el-radio-group v-model="addForm.type" style="width: 250px">
-              <el-radio-button label="0">目录</el-radio-button>
-              <el-radio-button label="1">菜单</el-radio-button>
-              <el-radio-button label="2">按钮</el-radio-button>
+            <el-radio-group v-model="addForm.type" style="width: 250px" @change="radioChange">
+              <el-radio-button label="0" @change="radioChange">目录</el-radio-button>
+              <el-radio-button label="1" @change="radioChange">菜单</el-radio-button>
+              <el-radio-button label="2" @change="radioChange">按钮</el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="名称" prop="name">
+          <el-form-item label="权限名称" prop="name">
             <el-input v-model="addForm.name"/>
+          </el-form-item>
+          <el-form-item v-show="addForm.type.toString() === '1'"  label="上级权限" prop="parentId">
+            <el-select v-model="addForm.parentId" placeholder="请选择">
+              <el-option
+                v-for="item in permissionList"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item v-show="addForm.type.toString() === '2'"  label="上级权限" prop="parentId">
+            <el-select v-model="addForm.parentId" placeholder="请选择">
+              <el-option
+                v-for="item in menuList"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id">
+              </el-option>
+            </el-select>
           </el-form-item>
         </el-form>
         <span slot="footer" class="dialog-footer">
@@ -47,10 +67,10 @@
             <!--<svg-icon :icon-class="scope.row.icon ? scope.row.icon : ''" />-->
           <!--</template>-->
         <!--</el-table-column>-->
-        <el-table-column :show-overflow-tooltip="true" prop="type" label="类型" align="center">
+        <el-table-column :show-overflow-tooltip="true" label="类型" align="center">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.type==='0'">目录</el-tag>
-            <el-tag type="success" v-else-if="scope.row.type==='1'">菜单</el-tag>
+            <el-tag v-if="scope.row.type === 0">目录</el-tag>
+            <el-tag type="success" v-else-if="scope.row.type === 1">菜单</el-tag>
             <el-tag type="warning" v-else>按钮</el-tag>
           </template>
         </el-table-column>
@@ -124,26 +144,17 @@
     name: "Permission",
     data() {
       return {
-        permissionList:[],
+        permissionList: [],
+        menuList: [],
         // 控制添加权限对话框的显示与隐藏
         addDialogVisible: false,
         // 添加用户的表单数据
         addForm: {
-          username: '',
-          password: '',
           roleId: '',
           type: 0
         },
         // 添加表单的验证规则对象
         addFormRules: {
-          username: [
-            {required: true, message: '请输入用户名', trigger: 'blur'},
-            {min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur'}
-          ],
-          password: [
-            {required: true, message: '请输入密码', trigger: 'blur'},
-            {min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur'}
-          ]
         }
       }
     },
@@ -157,11 +168,27 @@
           return this.$message.error('获取权限列表失败')
         }
         this.permissionList = res.data
-        // console.log(this.rightsList)
+        //console.log(this.permissionList)
+        this.menuList=[]
+        for (let item1 of res.data) {
+          for (let item2 of item1.children) {
+            let obj = {name:'', id:''}
+            let name = item1.name + '/' + item2.name
+            let id = item2.id
+            obj.name = name;
+            obj.id = id;
+            this.menuList.push(obj)
+            //console.log(this.menuList)
+          }
+        }
+        //console.log(this.menuList)
       },
       // 展示增加权限的对话框
       async showAddDialog() {
         this.addDialogVisible = true
+      },
+      radioChange() {
+        this.addForm.parentId = ''
       }
     }
   }
