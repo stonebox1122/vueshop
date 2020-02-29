@@ -20,7 +20,7 @@
         title="添加权限"
         :visible.sync="addDialogVisible"
         width="50%" @close="addDialogClosed">
-        <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="70px">
+        <el-form :model="addForm" :rules="addFormRules1" ref="addFormRef" label-width="90px">
           <el-form-item label="权限类型" prop="type">
             <el-radio-group v-model="addForm.type" style="width: 250px" @change="radioChange">
               <el-radio-button label="0" @change="radioChange">目录</el-radio-button>
@@ -31,7 +31,7 @@
           <el-form-item label="权限名称" prop="name">
             <el-input v-model="addForm.name"/>
           </el-form-item>
-          <el-form-item v-show="addForm.type.toString() === '1'"  label="上级权限" prop="parentId">
+          <el-form-item v-if="addForm.type.toString() === '1'"  label="上级权限" prop="parentId">
             <el-select v-model="addForm.parentId" placeholder="请选择">
               <el-option
                 v-for="item in permissionList"
@@ -41,7 +41,7 @@
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item v-show="addForm.type.toString() === '2'"  label="上级权限" prop="parentId">
+          <el-form-item v-if="addForm.type.toString() === '2'"  label="上级权限" prop="parentId">
             <el-select v-model="addForm.parentId" placeholder="请选择">
               <el-option
                 v-for="item in menuList"
@@ -51,10 +51,19 @@
               </el-option>
             </el-select>
           </el-form-item>
+          <el-form-item v-show="addForm.type.toString() !== '0'" label="权限描述" prop="permission">
+            <el-input v-model="addForm.permission"/>
+          </el-form-item>
+          <el-form-item v-show="addForm.type.toString() !== '0'" label="权限路径" prop="path">
+            <el-input v-model="addForm.path"/>
+          </el-form-item>
+          <el-form-item label="权限排序" prop="sort">
+            <el-input-number v-model="addForm.sort" :min="1" :max="999" controls-position="right" style="width: 210px;" />
+          </el-form-item>
         </el-form>
         <span slot="footer" class="dialog-footer">
         <el-button @click="addDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addUser">确 定</el-button>
+        <el-button type="primary" @click="addPermission">确 定</el-button>
       </span>
       </el-dialog>
 
@@ -74,7 +83,7 @@
             <el-tag type="warning" v-else>按钮</el-tag>
           </template>
         </el-table-column>
-        <el-table-column :show-overflow-tooltip="true" prop="permission" label="权限"/>
+        <el-table-column :show-overflow-tooltip="true" prop="permission" label="描述"/>
         <el-table-column :show-overflow-tooltip="true" prop="path" label="路径"/>
         <!--<el-table-column prop="sort" label="排序" align="center">-->
           <!--<template slot-scope="scope">-->
@@ -150,11 +159,44 @@
         addDialogVisible: false,
         // 添加用户的表单数据
         addForm: {
-          roleId: '',
-          type: 0
+          type: 0,
+          name: '',
+          parentId: '',
+          permission: '',
+          path: '',
+          sort: 999
         },
         // 添加表单的验证规则对象
-        addFormRules: {
+        // 可以添加多个规则，然后使用计算属性，但是在切换的时候就全部验证了，体验不好
+        // 参考https://blog.csdn.net/qq_41862017/article/details/82223713
+        addFormRules1: {
+          type: [
+            {required: true, trigger: 'blur'}
+          ],
+          name: [
+            {required: true, message: '请输入权限名称', trigger: 'blur'},
+            {min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur'}
+          ]
+        },
+        addFormRules2: {
+          type: [
+            {required: true, trigger: 'blur'}
+          ],
+          name: [
+            {required: true, message: '请输入权限名称', trigger: 'blur'},
+            {min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur'}
+          ],
+          parentId: [
+            {required: true, message: '请选择权限类型', trigger: 'blur'}
+          ],
+          permission: [
+            {required: true, message: '请输入权限描述', trigger: 'blur'},
+            {min: 2, max: 200, message: '长度在 2 到 200 个字符', trigger: 'blur'}
+          ],
+          path: [
+            {required: true, message: '请输入权限路径', trigger: 'blur'},
+            {min: 2, max: 200, message: '长度在 2 到 200 个字符', trigger: 'blur'}
+          ]
         }
       }
     },
@@ -163,16 +205,16 @@
     },
     methods: {
       async getPermissionList() {
-        const {data:res} = await this.$http.get('permission/tree')
+        const {data: res} = await this.$http.get('permission/tree')
         if (res.status !== 200) {
           return this.$message.error('获取权限列表失败')
         }
         this.permissionList = res.data
         //console.log(this.permissionList)
-        this.menuList=[]
+        this.menuList = []
         for (let item1 of res.data) {
           for (let item2 of item1.children) {
-            let obj = {name:'', id:''}
+            let obj = {name: '', id: ''}
             let name = item1.name + '/' + item2.name
             let id = item2.id
             obj.name = name;
@@ -189,6 +231,36 @@
       },
       radioChange() {
         this.addForm.parentId = ''
+      },
+      // 监听添加用户对话框的关闭事件
+      addDialogClosed() {
+        this.$refs.addFormRef.resetFields()
+      },
+      // 点击按钮，添加权限
+      addPermission() {
+        this.$refs.addFormRef.validate(async valid => {
+          if (!valid) return
+          // 预校验通过，可以发起添加用户的网络请求
+          if (this.addForm.parentId === '') this.addForm.parentId = 0
+          const {data: res} = await this.$http.post('permission', this.addForm)
+          if (res.status !== 200) {
+            this.$message.error('添加权限失败')
+          }
+          this.$message.success('添加权限成功')
+          // 隐藏添加用户的对话框
+          this.addDialogVisible = false
+          // 重新获取用户数据
+          this.getPermissionList()
+        })
+      }
+    },
+    computed: {
+      addFormRulesList: function () {
+        if (this.addForm.type.toString() === '0') {
+          return this.addFormRules1
+        } else {
+          return this.addFormRules2
+        }
       }
     }
   }

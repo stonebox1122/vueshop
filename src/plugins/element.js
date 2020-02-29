@@ -39,7 +39,8 @@ import {
   Upload,
   DatePicker,
   RadioGroup,
-  RadioButton
+  RadioButton,
+  InputNumber
 } from 'element-ui'
 
 import Timeline from './timeline/index.js'
@@ -85,5 +86,6 @@ Vue.use(TimelineItem)
 Vue.use(DatePicker)
 Vue.use(RadioGroup)
 Vue.use(RadioButton)
+Vue.use(InputNumber)
 Vue.prototype.$message = Message
 Vue.prototype.$confirm = MessageBox.confirm

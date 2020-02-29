@@ -56,7 +56,7 @@ export default {
       menulist: [],
       iconObj: {
         '1': 'el-icon-s-tools',
-        '103': 'el-icon-s-tools',
+        '8': 'el-icon-s-home',
         '101': 'el-icon-s-goods',
         '102': 'el-icon-s-order',
         '145': 'el-icon-s-platform'
