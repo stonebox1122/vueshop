@@ -22,7 +22,7 @@
             <!--一级菜单的模板区域-->
             <template slot="title">
               <!--图标-->
-              <i :class="iconObj[item.id]"></i>
+              <i :class="item.css"></i>
               <!--文本-->
               <span>{{item.name}}</span>
             </template>
@@ -31,7 +31,7 @@
                           :key="subItem.id" @click="saveNavState('/' + subItem.path)">
               <template slot="title">
                 <!--图标-->
-                <i class="el-icon-menu"></i>
+                <i :class="subItem.css"></i>
                 <!--文本-->
                 <span>{{subItem.name}}</span>
               </template>
@@ -54,13 +54,6 @@ export default {
   data () {
     return {
       menulist: [],
-      iconObj: {
-        '1': 'el-icon-s-tools',
-        '8': 'el-icon-s-home',
-        '101': 'el-icon-s-goods',
-        '102': 'el-icon-s-order',
-        '145': 'el-icon-s-platform'
-      },
       // 是否折叠
       isCollapse: false,
       // 被激活的链接地址

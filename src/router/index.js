@@ -4,6 +4,7 @@ import Login from '../components/Login'
 import Home from '../components/Home'
 import Welcome from '../components/Welcome'
 import User from '../components/system/User'
+import Icon from '../components/system/Icon'
 import Permission from '../components/system/Permission'
 import Role from '../components/power/Role'
 import Cate from '../components/goods/Cate'
@@ -36,6 +37,10 @@ const routes = [
       {
         path: '/user',
         component: User
+      },
+      {
+        path: '/icon',
+        component: Icon
       },
       {
         path: '/permission',
