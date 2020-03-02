@@ -12,7 +12,10 @@
     <el-container>
       <!--侧边栏-->
       <el-aside :width="isCollapse ? '64px' : '200px'">
-        <div class="toggle-button" @click="toggleCollapse">|||</div>
+        <div class="toggle-button" @click="toggleCollapse">
+          <i v-if="isCollapse" class="el-icon-s-unfold"></i>
+          <i v-else class="el-icon-s-fold"></i>
+        </div>
         <!--侧边栏菜单区-->
         <el-menu background-color="#333744" text-color="#fff"
                  active-text-color="#409eff" unique-opened :collapse="isCollapse"
@@ -126,7 +129,7 @@ export default {
 
   .toggle-button {
     background: #4a5064;
-    font-size: 10px;
+    font-size: 20px;
     line-height: 24px;
     color: #fff;
     text-align: center;

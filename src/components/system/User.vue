@@ -109,7 +109,7 @@
                          @click="removeUserById(scope.row.id)"></el-button>
             </el-tooltip>
             <!--分配角色按钮-->
-            <el-tooltip effect="dark" content="修改角色" placement="top-start" :enterable="false">
+            <el-tooltip effect="dark" content="分配角色" placement="top-start" :enterable="false">
               <el-button type="warning" icon="el-icon-setting" size="mini" @click="setRole(scope.row)"></el-button>
             </el-tooltip>
           </template>
