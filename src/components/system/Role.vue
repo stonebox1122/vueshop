@@ -48,7 +48,8 @@
             </el-tooltip>
             <!--分配权限按钮-->
             <el-tooltip effect="dark" content="修改权限" placement="top-start" :enterable="false">
-              <el-button type="warning" icon="el-icon-setting" size="mini" @click="showSetPermissionDialog(scope.row)"></el-button>
+              <el-button type="warning" icon="el-icon-setting" size="mini"
+                         @click="showEditPermissionDialog(scope.row.id)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -68,12 +69,15 @@
           <el-input v-model="addForm.description"></el-input>
         </el-form-item>
       </el-form>
-      <!--树形控件-->
-      <el-tree :data="permissionList" :props="treeProps" show-checkbox node-key="id"
-               default-expand-all ref="treeRef"></el-tree>
+      <div class="perTree">
+        <p>权限</p>
+        <!--树形控件-->
+        <el-tree :data="permissionList" :props="treeProps" show-checkbox node-key="id"
+                 default-expand-all ref="treeRef"></el-tree>
+      </div>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="addDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addRole">确 定</el-button>
+          <el-button @click="addDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="addRole">确 定</el-button>
       </span>
     </el-dialog>
     <!--修改角色对话框-->
@@ -94,17 +98,17 @@
         <el-button type="primary" @click="editRole">确 定</el-button>
       </span>
     </el-dialog>
-    <!--分配权限的对话框-->
+    <!--修改权限的对话框-->
     <el-dialog
-      title="分配权限"
-      :visible.sync="setPermissionDialogVisible"
-      width="50%" @close="setPermissionDialogClosed">
+      title="修改权限"
+      :visible.sync="editPermissionDialogVisible"
+      width="50%" @close="editPermissionDialogClosed">
       <!--树形控件-->
       <el-tree :data="permissionList" :props="treeProps" show-checkbox node-key="id"
-               default-expand-all :default-checked-keys="defKeys" ref="treeRef"></el-tree>
+               default-expand-all :default-checked-keys="defKeys" ref="treeRef2"></el-tree>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="setPermissionDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="allotPermissions">确 定</el-button>
+        <el-button @click="editPermissionDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editPermissions">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -136,7 +140,7 @@
           ]
         },
         // 添加角色对话框中选中的权限Id值数组
-        addKeys: [],
+        addKeys: [1],
         // 控制修改角色对话框的显示与隐藏
         editDialogVisible: false,
         editForm: {
@@ -154,8 +158,8 @@
             {min: 1, max: 20, message: '长度在 1 到 20 个字符', trigger: 'blur'}
           ]
         },
-        // 控制分配权限对话框显示与隐藏
-        setPermissionDialogVisible: false,
+        // 控制修改权限对话框显示与隐藏
+        editPermissionDialogVisible: false,
         // 所有权限的数据
         permissionList: [],
         // 树形控件的属性绑定对象
@@ -163,9 +167,9 @@
           label: 'name',
           children: 'children'
         },
-        // 默认选中的节点Id值数组
+        // 角色选中的节点Id值数组
         defKeys: [],
-        // 当前即将分配权限的角色id
+        // 当前即将修改权限的角色id
         roleId: ''
       }
     },
@@ -174,7 +178,7 @@
     },
     methods: {
       // 展示增加角色的对话框
-      async showAddDialog() {
+      showAddDialog() {
         // 在展示对话框之前获取所有权限列表
         this.getPermissionList()
         this.addDialogVisible = true
@@ -279,30 +283,42 @@
         this.$message.success('删除角色成功')
         this.getRoleList()
       },
-      // 展示分配权限的对话框
-      async showSetPermissionDialog(role) {
-        this.roleId = role.id
-        // 获取所有权限的数据
-        this.getPermissionList()
-        // console.log(this.rightsList)
-        // 递归获取三级节点的id
-        this.getLeafKeys(role, this.defKeys)
-        console.log(this.permissionList)
-        console.log(this.defKeys)
-        this.setPermissionDialogVisible = true
+      // 展示修改权限的对话框
+      showEditPermissionDialog(roleId) {
+        // 获取当前角色的权限id数组和所有权限的数据
+        // this.getDefKeys(roleId).then(value => {
+        //   this.getPermissionList()
+        // })
+        this.$http.all([this.getDefKeys(roleId), this.getPermissionList()])
+
+        this.editPermissionDialogVisible = true
       },
-      // 通过递归的形式，获取角色下所有三级权限的id，并保存到defKeys数组中
-      getLeafKeys(node, arr) {
-        // 如果当前node节点不包含children属性，则是三级节点
-        if (!node.children) {
-          return arr.push(node.id)
+      // 获取角色的三级权限的id，并保存到defKeys数组中
+      async getDefKeys(roleId) {
+        this.roleId = roleId
+        const {data: res} = await this.$http.get('rolePermission/role/' + roleId)
+        if (res.status !== 200) {
+          return this.$message.error('获取权限列表失败')
         }
-        // 如果当前node节点包含children属性，则递归
-        node.children.forEach(item => this.getLeafKeys(item, arr))
+        res.data.forEach(item => this.defKeys.push(item.permissionId))
       },
       // 监听分配权限对话框的关闭事件
-      setPermissionDialogClosed() {
+      editPermissionDialogClosed() {
         this.defKeys = []
+      },
+      async editPermissions() {
+        const keys = [
+          ...this.$refs.treeRef2.getCheckedKeys(),
+          ...this.$refs.treeRef2.getHalfCheckedKeys()
+        ]
+        const pids = keys.join(',')
+        const {data: res} = await this.$http.post('rolePermission/role/' + this.roleId, pids)
+        if (res.status !== 200) {
+          return this.$message.error('修改角色权限失败')
+        }
+        this.$message.success('修改角色权限成功')
+        // 隐藏修改角色权限的对话框
+        this.editPermissionDialogVisible = false
       },
       // 点击为角色分配权限
       async allotPermissions() {
@@ -311,14 +327,14 @@
           ...this.$refs.treeRef.getHalfCheckedKeys()
         ]
         const idStr = keys.join(',')
-        const {data:res} = await this.$http.p
+        const {data: res} = await this.$http.p
         ost(`roles/${this.roleId}/rights`, {rids: idStr})
         if (res.status !== 200) {
           return this.$message.error('分配权限失败')
         }
         this.$message.success('分配权限成功')
         this.getRoleList()
-        this.setPermissionDialogVisible = false
+        this.editPermissionDialogVisible = false
       }
     }
   }
@@ -340,5 +356,12 @@
   .vcenter {
     display: flex;
     align-items: center;
+  }
+
+  .perTree {
+    margin-left: 30px;
+    p {
+      padding: 0 12px 0 0;
+    }
   }
 </style>
