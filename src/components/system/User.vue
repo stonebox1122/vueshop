@@ -130,7 +130,7 @@
     <el-dialog
       title="添加用户"
       :visible.sync="addDialogVisible"
-      width="50%" @close="addDialogClosed">
+      width="50%" @close="addDialogClosed" :close-on-click-modal='false'>
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="70px">
         <el-form-item label="工号" prop="username">
           <el-input v-model="addForm.username"></el-input>
@@ -158,7 +158,7 @@
     <el-dialog
       title="修改用户"
       :visible.sync="editDialogVisible"
-      width="50%" @close="editDialogClosed">
+      width="50%" @close="editDialogClosed" :close-on-click-modal='false'>
       <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" label-width="70px">
         <el-form-item label="工号">
           <el-input v-model="editForm.username" disabled></el-input>
@@ -176,7 +176,7 @@
     <el-dialog
       title="分配角色"
       :visible.sync="setRoleDialogVisible"
-      width="50%" @close="setRoleDialogClosed">
+      width="50%" @close="setRoleDialogClosed" :close-on-click-modal='false'>
       <div v-if="userInfo.roles">
         <p>当前的用户：{{userInfo.username}}</p>
         <p>当前的角色：{{userInfo.roles[0].description}}</p>

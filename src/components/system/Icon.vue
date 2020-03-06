@@ -40,7 +40,7 @@
     <el-dialog
       title="添加图标"
       :visible.sync="addDialogVisible"
-      width="50%" @close="addDialogClosed">
+      width="50%" @close="addDialogClosed" :close-on-click-modal='false'>
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="70px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="addForm.name"></el-input>

@@ -60,7 +60,7 @@
     <el-dialog
       title="添加用户"
       :visible.sync="addDialogVisible"
-      width="50%" @close="addDialogClosed">
+      width="50%" @close="addDialogClosed" :close-on-click-modal='false'>
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="70px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="addForm.name"></el-input>
@@ -84,7 +84,7 @@
     <el-dialog
       title="修改角色"
       :visible.sync="editDialogVisible"
-      width="50%" @close="editDialogClosed">
+      width="50%" @close="editDialogClosed" :close-on-click-modal='false'>
       <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" label-width="70px">
         <el-form-item label="名称">
           <el-input v-model="editForm.name" prop="name"></el-input>
@@ -102,7 +102,7 @@
     <el-dialog
       title="修改权限"
       :visible.sync="editPermissionDialogVisible"
-      width="50%" @close="editPermissionDialogClosed">
+      width="50%" @close="editPermissionDialogClosed" :close-on-click-modal='false'>
       <!--树形控件-->
       <el-tree :data="permissionList" :props="treeProps" show-checkbox node-key="id"
                default-expand-all :default-checked-keys="defKeys" ref="treeRef2"></el-tree>
@@ -170,7 +170,8 @@
         // 角色选中的节点Id值数组
         defKeys: [],
         // 当前即将修改权限的角色id
-        roleId: ''
+        roleId: '',
+        rolePermissionList: []
       }
     },
     created() {
@@ -311,14 +312,25 @@
           ...this.$refs.treeRef2.getCheckedKeys(),
           ...this.$refs.treeRef2.getHalfCheckedKeys()
         ]
-        const pids = keys.join(',')
-        const {data: res} = await this.$http.post('rolePermission/role/' + this.roleId, pids)
+        // console.log(keys)
+        keys.forEach(item => {
+          var rolePermission = {
+            'roleId': '',
+            'permissionId': ''
+          }
+          rolePermission.roleId = this.roleId
+          rolePermission.permissionId = item
+          this.rolePermissionList.push(rolePermission)
+        })
+        // console.log(this.rolePermissionList)
+        const {data: res} = await this.$http.post('rolePermission/role/' + this.roleId, this.rolePermissionList)
         if (res.status !== 200) {
           return this.$message.error('修改角色权限失败')
         }
         this.$message.success('修改角色权限成功')
         // 隐藏修改角色权限的对话框
         this.editPermissionDialogVisible = false
+        this.rolePermissionList = []
       },
       // 点击为角色分配权限
       async allotPermissions() {

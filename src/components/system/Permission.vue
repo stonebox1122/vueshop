@@ -103,7 +103,7 @@
     <el-dialog
       title="添加权限"
       :visible.sync="addDialogVisible"
-      width="50%" @close="addDialogClosed">
+      width="50%" @close="addDialogClosed" :close-on-click-modal='false'>
       <el-form :model="addForm" :rules="addFormRules1" ref="addFormRef" label-width="90px">
         <el-form-item label="权限类型" prop="type">
           <el-radio-group v-model="addForm.type" style="width: 250px" @change="radioChange">
@@ -122,6 +122,8 @@
               :key="item.id"
               :label="item.name"
               :value="item.name">
+              <span style="float: left"><i :class="item.name"></i></span>
+              <span style="float: right">{{ item.name }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -165,13 +167,13 @@
     <el-dialog
       title="修改权限"
       :visible.sync="editDialogVisible"
-      width="50%" @close="editDialogClosed">
+      width="50%" @close="editDialogClosed" :close-on-click-modal='false'>
       <el-form :model="editForm" :rules="editFormRules1" ref="editFormRef" label-width="90px">
         <el-form-item label="权限类型" prop="type">
           <el-radio-group v-model="editForm.type" style="width: 250px" @change="radioChange">
-            <el-radio-button label="0" @change="radioChange">目录</el-radio-button>
-            <el-radio-button label="1" @change="radioChange">菜单</el-radio-button>
-            <el-radio-button label="2" @change="radioChange">按钮</el-radio-button>
+            <el-radio-button label="0" @change="radioChange" :disabled="editForm.type !== 0">目录</el-radio-button>
+            <el-radio-button label="1" @change="radioChange" :disabled="editForm.type !== 1">菜单</el-radio-button>
+            <el-radio-button label="2" @change="radioChange" :disabled="editForm.type !== 2">按钮</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="权限名称" prop="name">
@@ -184,6 +186,8 @@
               :key="item.id"
               :label="item.name"
               :value="item.name">
+              <span style="float: left"><i :class="item.name"></i></span>
+              <span style="float: right">{{ item.name }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -340,6 +344,7 @@
       radioChange() {
         this.addForm.css = ''
         this.addForm.parentId = ''
+        // this.editForm.parentId = ''
       },
       // 监听添加用户对话框的关闭事件
       addDialogClosed() {
@@ -381,6 +386,7 @@
           return this.$message.error('查询用户信息失败')
         }
         this.editForm = res.data
+        // console.log(this.editForm)
         this.getIconList()
         this.editDialogVisible = true
       },
