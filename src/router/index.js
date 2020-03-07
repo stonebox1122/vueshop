@@ -7,6 +7,10 @@ import User from '../components/system/User'
 import Icon from '../components/system/Icon'
 import Permission from '../components/system/Permission'
 import Role from '../components/system/Role'
+import Employeestate from '../components/company/Employeestate'
+import Leavetype from '../components/company/Leavetype'
+import Organization from '../components/company/Organization'
+
 import Cate from '../components/goods/Cate'
 import Params from '../components/goods/Params'
 import GoodsList from '../components/goods/List'
@@ -49,6 +53,18 @@ const routes = [
       {
         path: '/role',
         component: Role
+      },
+      {
+        path: '/organization',
+        component: Organization
+      },
+      {
+        path: '/employeestate',
+        component: Employeestate
+      },
+      {
+        path: '/leavetype',
+        component: Leavetype
       },
       {
         path: '/categories',
