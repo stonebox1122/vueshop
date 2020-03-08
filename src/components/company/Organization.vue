@@ -16,7 +16,7 @@
       </el-row>
 
       <!--组织列表区域-->
-      <el-table ref="table" :data="organizationList" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="id" style="width: 100%;margin-bottom: 20px;">
+      <el-table ref="table" :data="organizationList" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="id" style="width: 100%;margin-bottom: 20px;" default-expand-all>
         <el-table-column :show-overflow-tooltip="true" label="组织名称" prop="name" fixed width="200"/>
         <el-table-column :show-overflow-tooltip="true" label="组织编码" prop="code" align="center" width="200"/>
         <el-table-column :show-overflow-tooltip="true" label="法人代表" prop="legalRepresentative" align="center"/>
@@ -202,7 +202,8 @@
           return this.$message.error('获取组织架构失败')
         }
         this.organizationList = res.data
-        //console.log(this.organizationList)
+        this.removeChildren(this.organizationList)
+        // console.log(this.organizationList)
         this.menuList = []
         for (let item1 of res.data) {
           for (let item2 of item1.children) {
@@ -216,6 +217,15 @@
           }
         }
         //console.log(this.menuList)
+      },
+      removeChildren(arr) {
+        arr.forEach(item => {
+          if (item.children.length === 0) {
+            delete item.children
+          } else if (item.children.length > 0){
+            this.removeChildren(item.children)
+          }
+        })
       },
       // 展示增加组织的对话框
       async showAddDialog() {
@@ -294,12 +304,11 @@
         this.$refs.editFormRef.validate(async valid => {
           if (!valid) return
           // 预校验通过，可以发起修改用户的网络请求
-          if (this.editForm.pid.length > 0) {
-            this.editForm.pid = this.editForm.pid[this.editForm.pid.length-1]
-          } else {
-            this.editForm.pid = 0
-          }
-          // console.log(this.editForm.pid)
+          // if (this.editForm.pid.length > 0) {
+          //   this.editForm.pid = this.editForm.pid[this.editForm.pid.length-1]
+          // } else {
+          //   this.editForm.pid = 0
+          // }
           const {data: res} = await this.$http.put('organization/' + this.editForm.id, this.editForm)
           if (res.status !== 200) {
             this.$message.error('修改组织失败')

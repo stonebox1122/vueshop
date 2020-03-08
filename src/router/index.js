@@ -10,6 +10,7 @@ import Role from '../components/system/Role'
 import Employeestate from '../components/company/Employeestate'
 import Leavetype from '../components/company/Leavetype'
 import Organization from '../components/company/Organization'
+import Department from '../components/company/Department'
 
 import Cate from '../components/goods/Cate'
 import Params from '../components/goods/Params'
@@ -57,6 +58,10 @@ const routes = [
       {
         path: '/organization',
         component: Organization
+      },
+      {
+        path: '/department',
+        component: Department
       },
       {
         path: '/employeestate',
