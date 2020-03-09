@@ -18,9 +18,9 @@
       <!--部门列表区域-->
       <el-table ref="table" :data="departmentList" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" row-key="id" style="width: 100%;margin-bottom: 20px;" default-expand-all>
         <el-table-column :show-overflow-tooltip="true" label="部门名称" prop="name" fixed width="200"/>
-        <el-table-column :show-overflow-tooltip="true" label="部门编码" prop="code" align="center" width="200"/>
-        <el-table-column :show-overflow-tooltip="true" label="组织名称" prop="organizationId" align="center"/>
-        <el-table-column :show-overflow-tooltip="true" label="部门主管" prop="managerId" align="center"/>
+        <el-table-column :show-overflow-tooltip="true" label="部门编码" prop="code" align="center" width="100"/>
+        <el-table-column :show-overflow-tooltip="true" label="组织名称" prop="organizationName" align="center" width="200"/>
+        <el-table-column :show-overflow-tooltip="true" label="部门主管" prop="employeeName" align="center"/>
 
         <el-table-column label="状态" align="center">
           <template slot-scope="scope">
@@ -69,18 +69,18 @@
         <el-form-item label="部门编码" prop="code">
           <el-input v-model="addForm.code"/>
         </el-form-item>
-        <el-form-item label="上级部门" prop="pid">
-          <el-cascader
-            v-model="addForm.pid"
-            :options="departmentList"
-            :props="departmentProps"
-            clearable></el-cascader>
-        </el-form-item>
         <el-form-item label="所属组织" prop="organizationId">
           <el-cascader
             v-model="addForm.organizationId"
             :options="organizationList"
             :props="organizationProps"
+            clearable @change="handleChange"></el-cascader>
+        </el-form-item>
+        <el-form-item label="上级部门" prop="pid">
+          <el-cascader
+            v-model="addForm.pid"
+            :options="departmentList"
+            :props="departmentProps"
             clearable></el-cascader>
         </el-form-item>
         <el-form-item label="部门主管" prop="managerId">
@@ -114,18 +114,18 @@
         <el-form-item label="部门编码" prop="code">
           <el-input v-model="editForm.code"/>
         </el-form-item>
-        <el-form-item label="上级部门" prop="pid">
-          <el-cascader
-            v-model="editForm.pid"
-            :options="departmentList"
-            :props="departmentProps"
-            clearable :disabled="true"></el-cascader>
-        </el-form-item>
         <el-form-item label="所属组织" prop="organizationId">
           <el-cascader
             v-model="editForm.organizationId"
             :options="organizationList"
             :props="organizationProps"
+            clearable :disabled="true"></el-cascader>
+        </el-form-item>
+        <el-form-item label="上级部门" prop="pid">
+          <el-cascader
+            v-model="editForm.pid"
+            :options="departmentList"
+            :props="departmentProps"
             clearable :disabled="true"></el-cascader>
         </el-form-item>
         <el-form-item label="部门主管" prop="managerId">
@@ -242,13 +242,6 @@
         this.organizationList = res.data
         this.removeChildren(this.organizationList)
       },
-      async getManagerList() {
-        const {data: res} = await this.$http.get('employee/manager')
-        if (res.status !== 200) {
-          return this.$message.error('获取主管列表失败')
-        }
-        this.managerList = res.data
-      },
       removeChildren(arr) {
         arr.forEach(item => {
           if (item.children.length === 0) {
@@ -261,8 +254,28 @@
       // 展示增加部门的对话框
       async showAddDialog() {
         this.getOrganizationList()
-        this.getManagerList()
         this.addDialogVisible = true
+      },
+      // 根据选择的组织获取该组织下的部门列表和管理人员列表
+      async getDepartmentListByOrganizationId(organizationId) {
+        const {data: res} = await this.$http.get('department/tree/' + organizationId)
+        if (res.status !== 200) {
+          return this.$message.error('获取部门架构失败')
+        }
+        this.departmentList = res.data
+        this.removeChildren(this.departmentList)
+      },
+      async getManagerListByOrganizationId(organizationId) {
+        const {data: res} = await this.$http.get('employee/manager/' + organizationId)
+        if (res.status !== 200) {
+          return this.$message.error('获取主管列表失败')
+        }
+        this.managerList = res.data
+      },
+      handleChange() {
+        const organizationId = this.addForm.organizationId[this.addForm.organizationId.length - 1]
+        this.getDepartmentListByOrganizationId(organizationId)
+        this.getManagerListByOrganizationId(organizationId)
       },
       // 监听添加部门对话框的关闭事件
       addDialogClosed() {
@@ -313,6 +326,10 @@
           return this.$message.error('查询部门信息失败')
         }
         this.editForm = res.data
+      },
+      // 获取指定Id部门所在组织的所有管理人员列表
+      getManagerListByDepartmentId() {
+
       },
       // 展示编辑部门的对话框
       async showEditDialog(id) {
