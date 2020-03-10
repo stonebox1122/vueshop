@@ -77,12 +77,12 @@
             v-model="addForm.organizationId"
             :options="organizationList"
             :props="organizationProps"
-            clearable></el-cascader>
+            clearable @change="handleChange"></el-cascader>
         </el-form-item>
         <el-form-item label="部门" prop="departmentId">
           <el-cascader
             v-model="addForm.departmentId"
-            :options="departmentList"
+            :options="departmentListByOrganizationId"
             :props="departmentProps"
             clearable></el-cascader>
         </el-form-item>
@@ -142,6 +142,15 @@
         }
         cb(new Error('职位级别为1-19'))
       }
+      // 验证编码唯一性规则
+      var checkUnique = (rule, value, cb) => {
+        this.existsCode = false
+        this.validateCode(this.departmentList,value)
+        if (this.existsCode === false) {
+          return cb()
+        }
+        cb(new Error('请输入不重复的部门编码'))
+      }
       return {
         departmentList: [],
         // 指定级联选择器的配置对象
@@ -163,13 +172,15 @@
         },
         // 所有职位列表数据
         jobList: [],
+        departmentListByOrganizationId: [],
         // 控制添加职位对话框的显示与隐藏
         addDialogVisible: false,
         addForm: {
           name: '',
           code: '',
           level: '',
-          jobId: ''
+          departmentId: '',
+          organizationId: ''
         },
         // 添加职位表单的验证规则对象
         addFormRules: {
@@ -179,20 +190,23 @@
           ],
           code: [
             {required: true, message: '请输入职位编码', trigger: 'blur'},
-            {min: 1, max: 100, message: '长度在 1 到 100 个字符', trigger: 'blur'}
+            {min: 1, max: 100, message: '长度在 1 到 100 个字符', trigger: 'blur'},
+            {validator: checkUnique, trigger: ['blur', 'change']}
           ],
           level: [
             {required: true, message: '请输入职位级别', trigger: 'blur'},
-            {validator: checkLevel, trigger: 'blur'}
+            {validator: checkLevel, trigger: ['blur', 'change']}
           ]
         },
+        existsCode: false,
         // 控制修改职位对话框的显示与隐藏
         editDialogVisible: false,
         editForm: {
           name: '',
           code: '',
           level: '',
-          jobId: ''
+          departmentId: '',
+          organizationId: ''
         },
         // 修改权限表单的验证规则对象
         editFormRules: {
@@ -247,11 +261,37 @@
           }
         })
       },
+      validateCode(arr, code) {
+        arr.some(item => {
+          if (item.code === code) {
+            this.existsCode = true
+            return true;
+          } else if (item.children){
+            this.validateCode(item.children, code)
+          }
+        })
+      },
       // 展示增加职位的对话框
       async showAddDialog() {
         this.getOrganizationList()
-        this.getDepartmentList()
+        // this.getDepartmentList()
         this.addDialogVisible = true
+      },
+      // 根据选择的组织获取该组织下的部门列表和管理人员列表
+      async getDepartmentListByOrganizationId(organizationId) {
+        const {data: res} = await this.$http.get('department/tree/' + organizationId)
+        if (res.status !== 200) {
+          return this.$message.error('获取部门架构失败')
+        }
+        this.departmentListByOrganizationId = res.data
+        this.removeChildren(this.departmentListByOrganizationId)
+        console.log(this.departmentListByOrganizationId)
+      },
+      handleChange() {
+        if (this.addForm.organizationId.length > 0) {
+          const organizationId = this.addForm.organizationId[this.addForm.organizationId.length - 1]
+          this.getDepartmentListByOrganizationId(organizationId)
+        }
       },
       // 监听添加职位对话框的关闭事件
       addDialogClosed() {

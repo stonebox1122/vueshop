@@ -79,7 +79,7 @@
         <el-form-item label="上级部门" prop="pid">
           <el-cascader
             v-model="addForm.pid"
-            :options="departmentList"
+            :options="departmentListByOrganizationId"
             :props="departmentProps"
             clearable></el-cascader>
         </el-form-item>
@@ -112,7 +112,7 @@
           <el-input v-model="editForm.name"/>
         </el-form-item>
         <el-form-item label="部门编码" prop="code">
-          <el-input v-model="editForm.code"/>
+          <el-input v-model="editForm.code" :disabled="true"/>
         </el-form-item>
         <el-form-item label="所属组织" prop="organizationId">
           <el-cascader
@@ -159,6 +159,15 @@
     components: { Treeselect },
     name: "Department",
     data() {
+      // 验证编码唯一性规则
+      var checkUnique = (rule, value, cb) => {
+        this.existsCode = false
+        this.validateCode(this.departmentList,value)
+        if (this.existsCode === false) {
+          return cb()
+        }
+        cb(new Error('请输入不重复的部门编码'))
+      }
       return {
         departmentList: [],
         // 指定级联选择器的配置对象
@@ -179,6 +188,7 @@
           checkStrictly: true
         },
         managerList: [],
+        departmentListByOrganizationId: [],
         // 控制添加部门对话框的显示与隐藏
         addDialogVisible: false,
         // 添加部门的表单数据
@@ -197,9 +207,11 @@
           ],
           code: [
             {required: true, message: '请输入部门编码', trigger: 'blur'},
-            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'},
+            {validator: checkUnique, trigger: ['blur', 'change']}
           ]
         },
+        existsCode: false,
         // 控制修改部门对话框的显示与隐藏
         editDialogVisible: false,
         // 修改部门的表单信息
@@ -251,6 +263,16 @@
           }
         })
       },
+      validateCode(arr, code) {
+        arr.some(item => {
+          if (item.code === code) {
+            this.existsCode = true
+            return true;
+          } else if (item.children){
+            this.validateCode(item.children, code)
+          }
+        })
+      },
       // 展示增加部门的对话框
       async showAddDialog() {
         this.getOrganizationList()
@@ -262,8 +284,8 @@
         if (res.status !== 200) {
           return this.$message.error('获取部门架构失败')
         }
-        this.departmentList = res.data
-        this.removeChildren(this.departmentList)
+        this.departmentListByOrganizationId = res.data
+        this.removeChildren(this.departmentListByOrganizationId)
       },
       async getManagerListByOrganizationId(organizationId) {
         const {data: res} = await this.$http.get('employee/manager/' + organizationId)
@@ -273,9 +295,11 @@
         this.managerList = res.data
       },
       handleChange() {
-        const organizationId = this.addForm.organizationId[this.addForm.organizationId.length - 1]
-        this.getDepartmentListByOrganizationId(organizationId)
-        this.getManagerListByOrganizationId(organizationId)
+        if (this.addForm.organizationId.length > 0) {
+          const organizationId = this.addForm.organizationId[this.addForm.organizationId.length - 1]
+          this.getDepartmentListByOrganizationId(organizationId)
+          this.getManagerListByOrganizationId(organizationId)
+        }
       },
       // 监听添加部门对话框的关闭事件
       addDialogClosed() {

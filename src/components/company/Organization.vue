@@ -108,7 +108,7 @@
           <el-input v-model="editForm.name"/>
         </el-form-item>
         <el-form-item label="组织编码" prop="code">
-          <el-input v-model="editForm.code"/>
+          <el-input v-model="editForm.code" :disabled="true"/>
         </el-form-item>
         <el-form-item label="上级组织" prop="pid">
           <el-cascader
@@ -142,6 +142,15 @@
   export default {
     name: "Organization",
     data() {
+      // 验证编码唯一性规则
+      var checkUnique = (rule, value, cb) => {
+        this.existsCode = false
+        this.validateCode(this.organizationList,value)
+        if (this.existsCode === false) {
+          return cb()
+        }
+        cb(new Error('请输入不重复的组织编码'))
+      }
       return {
         organizationList: [],
         // 指定级联选择器的配置对象
@@ -169,8 +178,26 @@
           name: [
             {required: true, message: '请输入组织名称', trigger: 'blur'},
             {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          code: [
+            {required: true, message: '请输入组织编码', trigger: 'blur'},
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'},
+            {validator: checkUnique, trigger: ['blur', 'change']}
+          ],
+          legalRepresentative: [
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          phone: [
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          mail: [
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          address: [
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
           ]
         },
+        existsCode: false,
         // 控制修改组织对话框的显示与隐藏
         editDialogVisible: false,
         // 修改组织的表单信息
@@ -187,6 +214,18 @@
         editFormRules: {
           name: [
             {required: true, message: '请输入组织名称', trigger: 'blur'},
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          legalRepresentative: [
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          phone: [
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          mail: [
+            {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
+          ],
+          address: [
             {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'}
           ]
         }
@@ -224,6 +263,16 @@
             delete item.children
           } else if (item.children.length > 0){
             this.removeChildren(item.children)
+          }
+        })
+      },
+      validateCode(arr, code) {
+        arr.some(item => {
+          if (item.code === code) {
+            this.existsCode = true
+            return true;
+          } else if (item.children){
+            this.validateCode(item.children, code)
           }
         })
       },
