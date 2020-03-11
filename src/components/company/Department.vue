@@ -8,6 +8,23 @@
     </el-breadcrumb>
     <!--卡片视图区域-->
     <el-card>
+      <!--搜索区域-->
+      <el-row :gutter="20">
+        <el-col :span="8">
+          <el-cascader
+            v-model="searchOrganizationId"
+            :options="organizationList"
+            :props="searchProps"
+            style="width:390px;"
+            clearable></el-cascader>
+        </el-col>
+        <el-col :span="2" :offset="1">
+          <el-button type="primary" @click="searchDepartment()">搜索</el-button>
+        </el-col>
+        <el-col :span="2">
+          <el-button type="primary" @click="resetSearch()">重置</el-button>
+        </el-col>
+      </el-row>
       <!--添加部门按钮-->
       <el-row :gutter="5">
         <el-col :span="4">
@@ -74,6 +91,7 @@
             v-model="addForm.organizationId"
             :options="organizationList"
             :props="organizationProps"
+            style="width:390px;"
             clearable @change="handleChange"></el-cascader>
         </el-form-item>
         <el-form-item label="上级部门" prop="pid">
@@ -81,6 +99,9 @@
             v-model="addForm.pid"
             :options="departmentListByOrganizationId"
             :props="departmentProps"
+            :disabled="optionsChanged"
+            :placeholder="departmentPlaceholder"
+            style="width:390px;"
             clearable></el-cascader>
         </el-form-item>
         <el-form-item label="部门主管" prop="managerId">
@@ -119,6 +140,7 @@
             v-model="editForm.organizationId"
             :options="organizationList"
             :props="organizationProps"
+            style="width:390px;"
             clearable :disabled="true"></el-cascader>
         </el-form-item>
         <el-form-item label="上级部门" prop="pid">
@@ -126,6 +148,7 @@
             v-model="editForm.pid"
             :options="departmentList"
             :props="departmentProps"
+            style="width:390px;"
             clearable :disabled="true"></el-cascader>
         </el-form-item>
         <el-form-item label="部门主管" prop="managerId">
@@ -169,6 +192,15 @@
         cb(new Error('请输入不重复的部门编码'))
       }
       return {
+        searchOrganizationId: '',
+        searchProps: {
+          value: 'id',
+          label: 'name',
+          children: 'children',
+          expandTrigger: "hover",
+          checkStrictly: true,
+          emitPath: false
+        },
         departmentList: [],
         // 指定级联选择器的配置对象
         departmentProps: {
@@ -189,6 +221,8 @@
         },
         managerList: [],
         departmentListByOrganizationId: [],
+        optionsChanged: false,
+        departmentPlaceholder: '请选择',
         // 控制添加部门对话框的显示与隐藏
         addDialogVisible: false,
         // 添加部门的表单数据
@@ -209,6 +243,9 @@
             {required: true, message: '请输入部门编码', trigger: 'blur'},
             {min: 1, max: 200, message: '长度在 1 到 200 个字符', trigger: 'blur'},
             {validator: checkUnique, trigger: ['blur', 'change']}
+          ],
+          organizationId: [
+            {required: true, message: '请选择所属组织', trigger: 'blur'}
           ]
         },
         existsCode: false,
@@ -236,6 +273,7 @@
     },
     created() {
       this.getDepartmentList()
+      this.getOrganizationList()
     },
     methods: {
       async getDepartmentList() {
@@ -284,6 +322,11 @@
         if (res.status !== 200) {
           return this.$message.error('获取部门架构失败')
         }
+        if (res.data.length === 0) {
+          this.optionsChanged = true
+          this.departmentPlaceholder = '暂无部门'
+          return
+        }
         this.departmentListByOrganizationId = res.data
         this.removeChildren(this.departmentListByOrganizationId)
       },
@@ -295,6 +338,9 @@
         this.managerList = res.data
       },
       handleChange() {
+        this.addForm.pid = []
+        this.optionsChanged = false
+        this.departmentPlaceholder = '请输入'
         if (this.addForm.organizationId.length > 0) {
           const organizationId = this.addForm.organizationId[this.addForm.organizationId.length - 1]
           this.getDepartmentListByOrganizationId(organizationId)
@@ -310,7 +356,7 @@
         this.$refs.addFormRef.validate(async valid => {
           if (!valid) return
           // 预校验通过，可以发起添加用户的网络请求
-          if (this.addForm.pid === '') {
+          if (this.addForm.pid.length === 0) {
             this.addForm.pid = 0
           }  else {
             this.addForm.pid = this.addForm.pid[this.addForm.pid.length-1]
@@ -358,6 +404,7 @@
       // 展示编辑部门的对话框
       async showEditDialog(id) {
         this.getDepartmentItem(id)
+        this.getOrganizationList()
         // this.$http.all([this.getDepartmentItem(id), this.getDepartmentList()])
         // this.disableCascadeItem(this.departmentList, id)
         // console.log(this.departmentList)
@@ -418,11 +465,28 @@
         }
         this.$message.success('删除部门成功')
         this.getDepartmentList()
+      },
+      async searchDepartment() {
+        this.departmentListByOrganizationId = []
+        this.getDepartmentListByOrganizationId(this.searchOrganizationId).then(response => {
+          this.departmentList = this.departmentListByOrganizationId
+        })
+      },
+      resetSearch() {
+        this.searchOrganizationId = ''
+        this.getDepartmentList()
       }
     }
   }
 </script>
 
 <style lang="less" scoped>
+  .el-row {
+    margin-bottom: 20px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 
 </style>

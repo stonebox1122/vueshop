@@ -15,28 +15,29 @@
         </el-col>
       </el-row>
       <!--职位列表区域-->
-      <el-table :data="jobList" stripe>
+      <el-table :data="jobList" stripe :default-sort = "{prop: 'code', order: 'ascending'}">
         <el-table-column label="名称" prop="name" align="center" fixed width="200"></el-table-column>
-        <el-table-column label="编码" prop="code" align="center"></el-table-column>
+        <el-table-column label="编码" prop="code" align="center" sortable></el-table-column>
         <el-table-column label="级别" prop="level" align="center"></el-table-column>
-        <el-table-column label="部门" prop="departmentName" align="center"></el-table-column>
-        <el-table-column label="组织" prop="organizationName" align="center"></el-table-column>
-
-        <el-table-column label="创建时间" prop="createTime" align="center">
-          <template slot-scope="scope">
-            {{scope.row.createTime | dateFormat}}
-          </template>
-        </el-table-column>
-        <el-table-column label="修改时间" prop="updateTime" align="center">
-          <template slot-scope="scope">
-            {{scope.row.updateTime | dateFormat}}
-          </template>
-        </el-table-column>
 
         <el-table-column label="状态" align="center">
           <template slot-scope="scope">
             <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0"
                        @change="jobStatusChanged(scope.row)"></el-switch>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="部门" prop="departmentName" align="center" width="200"></el-table-column>
+        <el-table-column label="组织" prop="organizationName" align="center" width="300"></el-table-column>
+
+        <el-table-column label="创建时间" prop="createTime" align="center" width="150">
+          <template slot-scope="scope">
+            {{scope.row.createTime | dateFormat}}
+          </template>
+        </el-table-column>
+        <el-table-column label="修改时间" prop="updateTime" align="center" width="150">
+          <template slot-scope="scope">
+            {{scope.row.updateTime | dateFormat}}
           </template>
         </el-table-column>
 
@@ -84,6 +85,8 @@
             v-model="addForm.departmentId"
             :options="departmentListByOrganizationId"
             :props="departmentProps"
+            :disabled="optionsChanged"
+            :placeholder="departmentPlaceholder"
             clearable></el-cascader>
         </el-form-item>
       </el-form>
@@ -102,7 +105,7 @@
           <el-input v-model="editForm.name"></el-input>
         </el-form-item>
         <el-form-item label="编码" prop="code">
-          <el-input v-model="editForm.code"></el-input>
+          <el-input v-model="editForm.code" :disabled="true"></el-input>
         </el-form-item>
         <el-form-item label="级别" prop="level">
           <el-input v-model="editForm.level"></el-input>
@@ -119,7 +122,7 @@
             v-model="editForm.departmentId"
             :options="departmentList"
             :props="departmentProps"
-            clearable></el-cascader>
+            clearable :disabled="true"></el-cascader>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -145,7 +148,7 @@
       // 验证编码唯一性规则
       var checkUnique = (rule, value, cb) => {
         this.existsCode = false
-        this.validateCode(this.departmentList,value)
+        this.validateCode(this.jobList,value)
         if (this.existsCode === false) {
           return cb()
         }
@@ -173,6 +176,8 @@
         // 所有职位列表数据
         jobList: [],
         departmentListByOrganizationId: [],
+        optionsChanged: false,
+        departmentPlaceholder: '请选择',
         // 控制添加职位对话框的显示与隐藏
         addDialogVisible: false,
         addForm: {
@@ -195,7 +200,14 @@
           ],
           level: [
             {required: true, message: '请输入职位级别', trigger: 'blur'},
-            {validator: checkLevel, trigger: ['blur', 'change']}
+            {validator: checkLevel, trigger: ['blur', 'change']},
+            {validator: checkUnique, trigger: ['blur', 'change']}
+          ],
+          departmentId: [
+            {required: true, message: '请选择所属部门', trigger: 'blur'}
+          ],
+          organizationId: [
+            {required: true, message: '请选择所属组织', trigger: 'blur'}
           ]
         },
         existsCode: false,
@@ -220,7 +232,7 @@
           ],
           level: [
             {required: true, message: '请输入职位级别', trigger: 'blur'},
-            {validator: checkLevel, trigger: 'blur'}
+            {validator: checkLevel, trigger: ['blur', 'change']}
           ]
         }
       }
@@ -283,11 +295,18 @@
         if (res.status !== 200) {
           return this.$message.error('获取部门架构失败')
         }
+        if (res.data.length === 0) {
+          this.optionsChanged = true
+          this.departmentPlaceholder = '暂无部门'
+          return
+        }
         this.departmentListByOrganizationId = res.data
         this.removeChildren(this.departmentListByOrganizationId)
-        console.log(this.departmentListByOrganizationId)
       },
       handleChange() {
+        this.addForm.departmentId = []
+        this.optionsChanged = false
+        this.departmentPlaceholder = '请输入'
         if (this.addForm.organizationId.length > 0) {
           const organizationId = this.addForm.organizationId[this.addForm.organizationId.length - 1]
           this.getDepartmentListByOrganizationId(organizationId)
@@ -302,16 +321,8 @@
         this.$refs.addFormRef.validate(async valid => {
           if (!valid) return
           // 预校验通过，可以发起添加用户的网络请求
-          if (this.addForm.pid === '') {
-            this.addForm.pid = 0
-          }  else {
-            this.addForm.pid = this.addForm.pid[this.addForm.pid.length-1]
-          }
-          if (this.addForm.organizationId === '') {
-            this.addForm.organizationId = 0
-          }  else {
-            this.addForm.organizationId = this.addForm.organizationId[this.addForm.organizationId.length-1]
-          }
+          this.addForm.departmentId = this.addForm.departmentId[this.addForm.departmentId.length-1]
+          this.addForm.organizationId = this.addForm.organizationId[this.addForm.organizationId.length-1]
           const {data: res} = await this.$http.post('job', this.addForm)
           if (res.status !== 200) {
             this.$message.error('添加职位失败')
@@ -346,6 +357,8 @@
       // 展示编辑职位的对话框
       async showEditDialog(id) {
         this.getJobItem(id)
+        this.getOrganizationList()
+        this.getDepartmentList()
         // this.$http.all([this.getJobItem(id), this.getJobList()])
         // this.disableCascadeItem(this.jobList, id)
         // console.log(this.jobList)
@@ -390,7 +403,7 @@
       // 根据Id删除对应的职位信息
       async removeJobById(id) {
         // 弹框询问用户是否删除数据
-        const confirmResult = await this.$confirm('此操作将永久删除该职位及其下级职位, 是否继续?', '提示', {
+        const confirmResult = await this.$confirm('此操作将永久删除该职位, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'

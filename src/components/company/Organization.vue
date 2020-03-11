@@ -77,6 +77,7 @@
             v-model="addForm.pid"
             :options="organizationList"
             :props="cascaderProps"
+            style="width:544px;"
             clearable></el-cascader>
         </el-form-item>
         <el-form-item label="法人代表" prop="legalRepresentative">
@@ -115,6 +116,7 @@
             v-model="editForm.pid"
             :options="organizationList"
             :props="cascaderProps"
+            style="width:544px;"
             clearable :disabled="true"></el-cascader>
         </el-form-item>
         <el-form-item label="法人代表" prop="legalRepresentative">
